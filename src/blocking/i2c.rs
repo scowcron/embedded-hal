@@ -1,4 +1,5 @@
 //! Blocking I2C API
+use core::iter::IntoIterator;
 
 /// Blocking read
 pub trait Read {
@@ -49,6 +50,33 @@ pub trait Write {
     /// - `SP` = stop condition
     fn write(&mut self, addr: u8, bytes: &[u8]) -> Result<(), Self::Error>;
 }
+
+/// Blocking write
+pub trait WriteIter {
+    /// Error type
+    type Error;
+
+    /// Sends bytes to slave with address `addr`
+    ///
+    /// # I2C Events (contract)
+    ///
+    /// ``` text
+    /// Master: ST SAD+W     B0     B1     ... BN     SP
+    /// Slave:           SAK    SAK    SAK ...    SAK
+    /// ```
+    ///
+    /// Where
+    ///
+    /// - `ST` = start condition
+    /// - `SAD+W` = slave address with 8th bit set to 0
+    /// - `SAK` = slave acknowledge
+    /// - `Bi` = ith byte of data
+    /// - `SP` = stop condition
+    fn write_iter<'a, WI>(&mut self, addr: u8, iter: WI) -> Result<(), Self::Error>
+        where WI: IntoIterator<Item = &'a u8>;
+}
+
+
 
 /// Blocking write + read
 pub trait WriteRead {
